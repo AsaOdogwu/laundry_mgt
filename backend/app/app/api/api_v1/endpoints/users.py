@@ -133,7 +133,6 @@ async def create_user(
     *,
     db: AgnosticDatabase = Depends(deps.get_db),
     user_in: schemas.UserCreate,
-    current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Create new user (moderator function).

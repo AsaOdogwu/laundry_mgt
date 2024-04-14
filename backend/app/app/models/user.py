@@ -26,3 +26,4 @@ class User(Base):
     is_active: bool = Field(default=False)
     is_superuser: bool = Field(default=False)
     refresh_tokens: list[ObjectId] = Field(default_factory=list)
+    
