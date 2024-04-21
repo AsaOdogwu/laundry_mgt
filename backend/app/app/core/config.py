@@ -1,9 +1,17 @@
 import secrets
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Annotated
 
-from pydantic import AnyHttpUrl, EmailStr, HttpUrl, field_validator
+from pydantic import AnyHttpUrl, EmailStr, HttpUrl, field_validator, BeforeValidator # noqa
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def parse_cors(v: Any) -> list[str] | str:
+    if isinstance(v, str) and not v.startswith("["):
+        return [i.strip() for i in v.split(",")]
+    elif isinstance(v, list | str):
+        return v
+    raise ValueError(v)
 
 
 class Settings(BaseSettings):
@@ -19,20 +27,20 @@ class Settings(BaseSettings):
     JWT_ALGO: str = "HS512"
     TOTP_ALGO: str = "SHA-1"
     SERVER_NAME: str = "LAUNDRE"
-    SERVER_HOST: AnyHttpUrl
-    SERVER_BOT: str = "Symona"
+    SERVER_HOST: str
+    SERVER_BOT: str = "Launly"
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
     # "http://localhost:8080", "http://local.dockertoolbox.tiangolo.com"]'
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: Annotated[list[str] | str, BeforeValidator(parse_cors)]
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    # @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    # def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    #     if isinstance(v, str) and not v.startswith("["):
+    #         return [i.strip() for i in v.split(",")]
+    #     elif isinstance(v, (list, str)):
+    #         return v
+    #     raise ValueError(v)
 
     PROJECT_NAME: str
     SENTRY_DSN: Optional[HttpUrl] = None
@@ -52,10 +60,11 @@ class Settings(BaseSettings):
     MONGO_DATABASE_URI: str
 
     SMTP_TLS: bool = True
-    SMTP_PORT: Optional[int] = None
-    SMTP_HOST: Optional[str] = None
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
+    SMTP_SSL: bool = False
+    SMTP_PORT: Optional[int] = 2525
+    SMTP_HOST: Optional[str] = "sandbox.smtp.mailtrap.io"
+    SMTP_USER: Optional[str] = "6f67eefc2d4b2a"
+    SMTP_PASSWORD: Optional[str] = "ff7aed1c675a39"
     EMAILS_FROM_EMAIL: Optional[EmailStr] = None
     EMAILS_FROM_NAME: Optional[str] = None
     EMAILS_TO_EMAIL: Optional[EmailStr] = None
@@ -68,11 +77,11 @@ class Settings(BaseSettings):
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
     EMAIL_TEMPLATES_DIR: str = "/app/app/email-templates/build"
-    EMAILS_ENABLED: bool = False
+    EMAILS_ENABLED: bool = True
 
     @field_validator("EMAILS_ENABLED", mode="before")
     def get_emails_enabled(cls, v: bool, info: ValidationInfo) -> bool:
-        return bool(info.data.get("SMTP_HOST") and info.data.get("SMTP_PORT") and info.data.get("EMAILS_FROM_EMAIL"))
+        return bool(info.data.get("SMTP_HOST") and info.data.get("SMTP_PORT") and info.data.get("EMAILS_FROM_EMAIL")) # noqa
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
     FIRST_SUPERUSER: EmailStr

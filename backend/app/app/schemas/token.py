@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel, ConfigDict, SecretStr
 from odmantic import Model, ObjectId
 
@@ -23,8 +23,8 @@ class RefreshToken(RefreshTokenUpdate):
 
 
 class Token(BaseModel):
-    access_token: SecretStr
-    refresh_token: Optional[SecretStr] = None
+    access_token: str
+    refresh_token: Optional[str] = None
     token_type: str
 
 
@@ -35,8 +35,8 @@ class TokenPayload(BaseModel):
 
 
 class MagicTokenPayload(BaseModel):
-    sub: Optional[ObjectId] = None
-    fingerprint: Optional[ObjectId] = None
+    sub: Optional[Any] = None
+    fingerprint: Optional[str] = None
 
 
 class WebToken(BaseModel):

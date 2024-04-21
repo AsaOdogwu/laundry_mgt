@@ -46,9 +46,11 @@ async def login_with_magic_link(*, db: AgnosticDatabase = Depends(deps.get_db), 
         # Still permits a timed-attack, but does create ambiguity.
         raise HTTPException(status_code=400, detail="A link to activate your account has been emailed.")
     tokens = security.create_magic_tokens(subject=user.id)
+
     if settings.EMAILS_ENABLED and user.email:
         # Send email with user.email as subject
         send_magic_login_email(email_to=user.email, token=tokens[0])
+        # TODO STORE CLAIMS TO USER DATABASE
     return {"claim": tokens[1]}
 
 
@@ -57,7 +59,7 @@ async def validate_magic_link(
     *,
     db: AgnosticDatabase = Depends(deps.get_db),
     obj_in: schemas.WebToken,
-    magic_in: bool = Depends(deps.get_magic_token),
+    magic_in: str = Depends(deps.get_magic_token),  # BUG wrong typing 
 ) -> Any:
     """
     Second step of a 'magic link' login.
@@ -99,8 +101,10 @@ async def login_with_oauth2(
     First step with OAuth2 compatible token login, get an access token for future requests.
     """
     user = await crud.user.authenticate(db, email=form_data.username, password=form_data.password)
-    if not form_data.password or not user or not crud.user.is_active(user):
+    if not user:
         raise HTTPException(status_code=400, detail="Login failed; incorrect email or password")
+    if not crud.user.is_active(user):
+        raise HTTPException(status_code=400, detail="Inactive User")
     # Check if totp active
     refresh_token = None
     force_totp = True
@@ -109,10 +113,8 @@ async def login_with_oauth2(
         force_totp = False
         refresh_token = security.create_refresh_token(subject=user.id)
         await crud.token.create(db=db, obj_in=refresh_token, user_obj=user)
-    access_token = security.create_access_token(subject=user.id, force_totp=force_totp),
-
     return {
-        "access_token": security.create_access_token(subject=user.id, force_totp=force_totp),
+        "access_token": security.create_access_token(subject=user.id, force_totp=force_totp), # noqa
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
@@ -159,6 +161,7 @@ async def enable_totp_authentication(
         if not data_in.password or not user:
             raise HTTPException(status_code=400, detail="Unable to authenticate or activate TOTP.")
     totp_in = security.create_new_totp(label=current_user.email, uri=data_in.uri)
+    print(data_in.claim, totp_in.secret, current_user.totp_counter)
     new_counter = security.verify_totp(
         token=data_in.claim, secret=totp_in.secret, last_counter=current_user.totp_counter
     )

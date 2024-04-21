@@ -9,10 +9,8 @@ from app import crud, models, schemas
 from app.api import deps
 from app.core.config import settings
 from app.core import security
-from app.utilities import (
-    send_new_account_email,
-)
-
+from app.utilities import send_new_account_email, send_email_validation_email
+from app.schemas import EmailValidation
 router = APIRouter()
 
 
@@ -35,6 +33,13 @@ async def create_user_profile(
         )
     # Create user auth
     user_in = schemas.UserCreate(password=password, email=email, full_name=full_name)
+    
+    tokens = security.create_magic_tokens(subject=email)
+    
+    email_data = EmailValidation(email=email, subject="Email Verification", token=tokens[0]) # noqa
+    # send email verifiication to email
+    if settings.EMAILS_ENABLED and email:
+        send_email_validation_email(email_data)
     user = await crud.user.create(db, obj_in=user_in)
     return user
 
@@ -106,7 +111,7 @@ async def request_new_totp(
     obj_in = security.create_new_totp(label=current_user.email)
     # Remove the secret ...
     obj_in.secret = None
-    return obj_in
+    return obj_ine
 
 
 @router.post("/toggle-state", response_model=schemas.Msg)

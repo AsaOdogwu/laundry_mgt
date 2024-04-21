@@ -3,7 +3,7 @@ from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from motor.core import AgnosticDatabase
-from odmantic import AIOEngine
+from odmantic import AIOEngine, ObjectId
 
 from app.db.base_class import Base
 from app.core.config import settings
@@ -28,7 +28,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.engine: AIOEngine = get_engine()
 
     async def get(self, db: AgnosticDatabase, id: Any) -> Optional[ModelType]:
-        return await self.engine.find_one(self.model, self.model.id == id)
+        return await self.engine.find_one(self.model, self.model.id == ObjectId(id)) # BUG FIX: Added ObjectId
 
     async def get_multi(self, db: AgnosticDatabase, *, page: int = 0, page_break: bool = False) -> list[ModelType]:
         offset = {"skip": page * settings.MULTI_MAX, "limit": settings.MULTI_MAX} if page_break else {}

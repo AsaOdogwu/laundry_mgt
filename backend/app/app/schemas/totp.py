@@ -3,7 +3,7 @@ from pydantic import BaseModel, SecretStr
 
 
 class NewTOTP(BaseModel):
-    secret: Optional[SecretStr] = None
+    secret: Optional[str] = None
     key: str
     uri: str
 
@@ -11,4 +11,4 @@ class NewTOTP(BaseModel):
 class EnableTOTP(BaseModel):
     claim: str
     uri: str
-    password: Optional[SecretStr] = None
+    password: Optional[str] = None
