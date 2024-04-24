@@ -103,8 +103,8 @@ async def login_with_oauth2(
     user = await crud.user.authenticate(db, email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Login failed; incorrect email or password")
-    if not crud.user.is_active(user):
-        raise HTTPException(status_code=400, detail="Inactive User")
+    # if not crud.user.is_active(user):
+    #     raise HTTPException(status_code=400, detail="Inactive User")
     # Check if totp active
     refresh_token = None
     force_totp = True
