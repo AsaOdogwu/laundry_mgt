@@ -42,9 +42,9 @@ async def login_with_magic_link(*, db: AgnosticDatabase = Depends(deps.get_db), 
     if not user:
         user_in = schemas.UserCreate(**{"email": email})
         user = await crud.user.create(db, obj_in=user_in)
-    if not crud.user.is_active(user):
-        # Still permits a timed-attack, but does create ambiguity.
-        raise HTTPException(status_code=400, detail="A link to activate your account has been emailed.")
+    # if not crud.user.is_active(user):
+    #     # Still permits a timed-attack, but does create ambiguity.
+    #     raise HTTPException(status_code=400, detail="A link to activate your account has been emailed.")
     tokens = security.create_magic_tokens(subject=user.id)
 
     if settings.EMAILS_ENABLED and user.email:
