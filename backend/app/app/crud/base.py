@@ -59,3 +59,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if obj:
             await self.engine.delete(obj)
         return obj
+    
+    async def configure_db(self, Model) -> None:
+        await self.engine.configure_database([Model])

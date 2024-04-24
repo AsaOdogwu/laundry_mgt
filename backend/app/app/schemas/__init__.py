@@ -11,5 +11,6 @@ from .token import (
     WebToken,
 )
 from .user import User, UserCreate, UserInDB, UserUpdate, UserLogin
+from .cloth import ClothCreate, ClothUpdate, ClothCatgeory
 from .emails import EmailContent, EmailValidation
 from .totp import NewTOTP, EnableTOTP

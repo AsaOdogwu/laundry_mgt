@@ -13,7 +13,7 @@ class UserLogin(BaseModel):
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     email_validated: Optional[bool] = False
-    is_active: Optional[bool] = True
+    is_active: Optional[bool] = False
     is_superuser: Optional[bool] = False
     full_name: str = ""
 
