@@ -103,8 +103,11 @@ async def login_with_oauth2(
     user = await crud.user.authenticate(db, email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Login failed; incorrect email or password")
-    # if not crud.user.is_active(user):
-    #     raise HTTPException(status_code=400, detail="Inactive User")
+    if not crud.user.is_email_validated(user):
+        raise HTTPException(status_code=400, detail="Email not verified")
+    if not crud.user.is_active(user):
+        raise HTTPException(status_code=400, detail="Inactive User")
+    
     # Check if totp active
     refresh_token = None
     force_totp = True
@@ -219,6 +222,22 @@ async def revoke_token(
     return {"msg": "Token revoked"}
 
 
+@router.post("/verify/email")
+async def verify_email(
+    *,
+    db: AgnosticDatabase = Depends(deps.get_db),
+    magic_in: str = Depends(deps.get_magic_token),
+) -> Any:
+    """
+    Verify email, it depends on a authorization bearer token from the email verification sent
+    """
+    user = await crud.user.get_by_email(db, email=magic_in.sub)
+    if not user:
+        raise HTTPException(status_code=400, detail="Email not found.")
+    await crud.user.validate_email(db=db, db_obj=user)
+    return {"msg": "Email verified"}
+
+
 @router.post("/recover/{email}", response_model=Union[schemas.WebToken, schemas.Msg])
 async def recover_password(email: str, db: AgnosticDatabase = Depends(deps.get_db)) -> Any:
     """
@@ -239,7 +258,7 @@ async def reset_password(
     db: AgnosticDatabase = Depends(deps.get_db),
     new_password: str = Body(...),
     claim: str = Body(...),
-    magic_in: bool = Depends(deps.get_magic_token),
+    magic_in: str = Depends(deps.get_magic_token),
 ) -> Any:
     """
     Reset password
@@ -260,3 +279,5 @@ async def reset_password(
     user.hashed_password = hashed_password
     await user.save()
     return {"msg": "Password updated successfully."}
+
+

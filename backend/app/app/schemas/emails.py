@@ -10,4 +10,4 @@ class EmailContent(BaseModel):
 class EmailValidation(BaseModel):
     email: EmailStr
     subject: str
-    token: SecretStr
+    token: str

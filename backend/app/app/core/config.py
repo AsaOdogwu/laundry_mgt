@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     JWT_ALGO: str = "HS512"
     TOTP_ALGO: str = "SHA-1"
     SERVER_NAME: str = "LAUNDRE"
-    SERVER_HOST: str
+    SERVER_HOST: str = ""  # put in the frontend url
     SERVER_BOT: str = "Launly"
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
